@@ -1,11 +1,12 @@
-import { ASTv2 } from '@glimmer/syntax';
+import { ASTv2, generateSyntaxError, SourceSpan } from '@glimmer/syntax';
 
 import { OptionalList } from '../../../shared/list';
-import { Ok, Result, ResultArray } from '../../../shared/result';
+import { Err, Ok, Result, ResultArray } from '../../../shared/result';
 import * as mir from '../../2-encoding/mir';
 import { NormalizationState } from '../context';
 import { BLOCK_KEYWORDS } from '../keywords';
 import { APPEND_KEYWORDS } from '../keywords/append';
+import { isKeywordOrReserved } from '../keywords/mapping';
 import { ClassifiedElement, hasDynamicFeatures } from './element/classified';
 import { ClassifiedComponent } from './element/component';
 import { ClassifiedSimpleElement } from './element/simple-element';
@@ -51,7 +52,7 @@ class NormalizationStatements {
     let args = VISIT_EXPRS.Args(node.args, state);
 
     return Result.all(head, args).andThen(([head, args]) =>
-      this.NamedBlocks(node.blocks, state).mapOk(
+      this.NamedBlocks(node.blocks, state, node.loc).mapOk(
         (blocks) =>
           new mir.InvokeBlock({
             loc: node.loc,
@@ -63,16 +64,48 @@ class NormalizationStatements {
     );
   }
 
-  NamedBlocks(blocks: ASTv2.NamedBlocks, state: NormalizationState): Result<mir.NamedBlocks> {
-    let list = new ResultArray(blocks.blocks.map((b) => this.NamedBlock(b, state)));
+  NamedBlocks(
+    blocks: ASTv2.NamedBlocks,
+    state: NormalizationState,
+    containingLoc: SourceSpan
+  ): Result<mir.NamedBlocks> {
+    let list = new ResultArray(blocks.blocks.map((b) => this.NamedBlock(b, state, containingLoc)));
 
     return list
       .toArray()
       .mapOk((list) => new mir.NamedBlocks({ loc: blocks.loc, blocks: OptionalList(list) }));
   }
 
-  NamedBlock(named: ASTv2.NamedBlock, state: NormalizationState): Result<mir.NamedBlock> {
+  NamedBlock(
+    named: ASTv2.NamedBlock,
+    state: NormalizationState,
+    containingLoc: SourceSpan
+  ): Result<mir.NamedBlock> {
     let body = state.visitBlock(named.block);
+
+    let reservedWords = named.block.scope.symbols.filter((s) => isKeywordOrReserved(s));
+
+    if (reservedWords.length > 0) {
+      // TODO: Logic to get a loc that represents the block invocation. This points to block params
+      // better support/a different structure in the AST, because this is hax.
+      let blockLoc = named.loc;
+      let blockSource = blockLoc.asString();
+
+      // if it doesn't start with <:, it's not a named block, use the containing block loc
+      if (blockSource.indexOf('<:') !== 0) {
+        blockLoc = containingLoc;
+        blockSource = blockLoc.asString();
+      }
+
+      let loc = blockLoc.sliceStartChars({ chars: blockSource.indexOf('\n') });
+
+      return Err(
+        generateSyntaxError(
+          `\`${reservedWords[0]}\` is a keyword or reserved word, and cannot be used as a variable name in a template. It was used as a block parameter name`,
+          loc
+        )
+      );
+    }
 
     return body.mapOk((body) => {
       return new mir.NamedBlock({

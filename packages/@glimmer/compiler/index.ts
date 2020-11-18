@@ -12,3 +12,4 @@ export { BuilderStatement, Builder } from './lib/builder/builder-interface';
 
 // exported only for tests
 export { default as WireFormatDebugger } from './lib/wire-format-debug';
+export { KEYWORDS_TYPES, RESERVED_WORDS } from './lib/passes/1-normalization/keywords/mapping';

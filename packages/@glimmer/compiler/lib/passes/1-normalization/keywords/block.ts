@@ -48,7 +48,7 @@ export const BLOCK_KEYWORDS = keywords('Block')
       }: { insertBefore: ASTv2.ExpressionNode | null; destination: ASTv2.ExpressionNode }
     ): Result<mir.InElement> {
       let named = node.blocks.get('default');
-      let body = VISIT_STMTS.NamedBlock(named, state);
+      let body = VISIT_STMTS.NamedBlock(named, state, node.loc);
       let destinationResult = VISIT_EXPRS.visit(destination, state);
 
       return Result.all(body, destinationResult)
@@ -137,8 +137,8 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let inverse = node.blocks.get('else');
 
       let conditionResult = VISIT_EXPRS.visit(condition, state);
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
-      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state) : Ok(null);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
+      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state, node.loc) : Ok(null);
 
       return Result.all(conditionResult, blockResult, inverseResult).mapOk(
         ([condition, block, inverse]) =>
@@ -201,8 +201,8 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let inverse = node.blocks.get('else');
 
       let conditionResult = VISIT_EXPRS.visit(condition, state);
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
-      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state) : Ok(null);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
+      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state, node.loc) : Ok(null);
 
       return Result.all(conditionResult, blockResult, inverseResult).mapOk(
         ([condition, block, inverse]) =>
@@ -270,8 +270,8 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let valueResult = VISIT_EXPRS.visit(value, state);
       let keyResult = key ? VISIT_EXPRS.visit(key, state) : Ok(null);
 
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
-      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state) : Ok(null);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
+      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state, node.loc) : Ok(null);
 
       return Result.all(valueResult, keyResult, blockResult, inverseResult).mapOk(
         ([value, key, block, inverse]) =>
@@ -335,8 +335,8 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let inverse = node.blocks.get('else');
 
       let valueResult = VISIT_EXPRS.visit(value, state);
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
-      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state) : Ok(null);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
+      let inverseResult = inverse ? VISIT_STMTS.NamedBlock(inverse, state, node.loc) : Ok(null);
 
       return Result.all(valueResult, blockResult, inverseResult).mapOk(
         ([value, block, inverse]) =>
@@ -393,7 +393,7 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let block = node.blocks.get('default');
 
       let positionalResult = VISIT_EXPRS.Positional(positional, state);
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
 
       return Result.all(positionalResult, blockResult).mapOk(
         ([positional, block]) =>
@@ -421,7 +421,7 @@ export const BLOCK_KEYWORDS = keywords('Block')
       let block = node.blocks.get('default');
 
       let namedResult = VISIT_EXPRS.NamedArguments(named, state);
-      let blockResult = VISIT_STMTS.NamedBlock(block, state);
+      let blockResult = VISIT_STMTS.NamedBlock(block, state, node.loc);
 
       return Result.all(namedResult, blockResult).mapOk(
         ([named, block]) =>
@@ -470,7 +470,7 @@ export const BLOCK_KEYWORDS = keywords('Block')
     ): Result<mir.InvokeComponent> {
       let definitionResult = VISIT_EXPRS.visit(definition, state);
       let argsResult = VISIT_EXPRS.Args(args, state);
-      let blocksResult = VISIT_STMTS.NamedBlocks(node.blocks, state);
+      let blocksResult = VISIT_STMTS.NamedBlocks(node.blocks, state, node.loc);
 
       return Result.all(definitionResult, argsResult, blocksResult).mapOk(
         ([definition, args, blocks]) =>

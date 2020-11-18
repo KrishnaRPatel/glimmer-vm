@@ -137,6 +137,18 @@ export class HasBlockSuite extends RenderTest {
   }
 
   @test({ kind: 'curly' })
+  'argument has-block (prop, default)'() {
+    this.registerComponent('TemplateOnly', 'Foo', '{{@hasBlock}}');
+
+    this.render({
+      layout: '<Foo @hasBlock={{has-block}}></Foo>',
+    });
+
+    this.assertComponent('false');
+    this.assertStableRerender();
+  }
+
+  @test({ kind: 'curly' })
   'parameterized has-block (attr, else) when else supplied'() {
     this.render({
       layout: '<button data-has-block="{{has-block "inverse"}}"></button>',

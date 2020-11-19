@@ -31,7 +31,7 @@ export function trackedData<T extends object, K extends keyof T>(
 
   function setter(self: T, value: T[K]): void {
     if (DEBUG) {
-      assertTagNotConsumed!(tagFor(self, key), self, key, true);
+      assertTagNotConsumed!(tagFor(self, key), self, key);
     }
 
     dirtyTagFor(self, key);
